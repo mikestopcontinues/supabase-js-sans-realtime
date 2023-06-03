@@ -24,16 +24,10 @@ export function applySettingDefaults<
   options: SupabaseClientOptions<SchemaName>,
   defaults: SupabaseClientOptions<any>
 ): SupabaseClientOptions<SchemaName> {
-  const {
-    db: dbOptions,
-    auth: authOptions,
-    realtime: realtimeOptions,
-    global: globalOptions,
-  } = options
+  const { db: dbOptions, auth: authOptions, global: globalOptions } = options
   const {
     db: DEFAULT_DB_OPTIONS,
     auth: DEFAULT_AUTH_OPTIONS,
-    realtime: DEFAULT_REALTIME_OPTIONS,
     global: DEFAULT_GLOBAL_OPTIONS,
   } = defaults
 
@@ -45,10 +39,6 @@ export function applySettingDefaults<
     auth: {
       ...DEFAULT_AUTH_OPTIONS,
       ...authOptions,
-    },
-    realtime: {
-      ...DEFAULT_REALTIME_OPTIONS,
-      ...realtimeOptions,
     },
     global: {
       ...DEFAULT_GLOBAL_OPTIONS,

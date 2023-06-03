@@ -5,12 +5,6 @@ import {
   PostgrestFilterBuilder,
   PostgrestQueryBuilder,
 } from '@supabase/postgrest-js'
-import {
-  RealtimeChannel,
-  RealtimeChannelOptions,
-  RealtimeClient,
-  RealtimeClientOptions,
-} from '@supabase/realtime-js'
 import { StorageClient as SupabaseStorageClient } from '@supabase/storage-js'
 import { DEFAULT_HEADERS } from './lib/constants'
 import { fetchWithAuth } from './lib/fetch'
@@ -33,8 +27,6 @@ const DEFAULT_AUTH_OPTIONS: SupabaseAuthClientOptions = {
   flowType: 'implicit',
 }
 
-const DEFAULT_REALTIME_OPTIONS: RealtimeClientOptions = {}
-
 /**
  * Supabase Client.
  *
@@ -53,9 +45,7 @@ export default class SupabaseClient<
    * Supabase Auth allows you to create and manage user sessions for access to data that is secured by access policies.
    */
   auth: SupabaseAuthClient
-  realtime: RealtimeClient
 
-  protected realtimeUrl: string
   protected authUrl: string
   protected storageUrl: string
   protected functionsUrl: string
@@ -76,7 +66,6 @@ export default class SupabaseClient<
    * @param options.auth.autoRefreshToken Set to "true" if you want to automatically refresh the token before expiring.
    * @param options.auth.persistSession Set to "true" if you want to automatically save the user session into local storage.
    * @param options.auth.detectSessionInUrl Set to "true" if you want to automatically detects OAuth grants in the URL and signs in the user.
-   * @param options.realtime Options passed along to realtime-js constructor.
    * @param options.global.fetch A custom fetch implementation.
    * @param options.global.headers Any additional headers to send with each network request.
    */
@@ -90,7 +79,6 @@ export default class SupabaseClient<
 
     const _supabaseUrl = stripTrailingSlash(supabaseUrl)
 
-    this.realtimeUrl = `${_supabaseUrl}/realtime/v1`.replace(/^http/i, 'ws')
     this.authUrl = `${_supabaseUrl}/auth/v1`
     this.storageUrl = `${_supabaseUrl}/storage/v1`
     this.functionsUrl = `${_supabaseUrl}/functions/v1`
@@ -99,7 +87,6 @@ export default class SupabaseClient<
     const defaultStorageKey = `sb-${new URL(this.authUrl).hostname.split('.')[0]}-auth-token`
     const DEFAULTS = {
       db: DEFAULT_DB_OPTIONS,
-      realtime: DEFAULT_REALTIME_OPTIONS,
       auth: { ...DEFAULT_AUTH_OPTIONS, storageKey: defaultStorageKey },
       global: DEFAULT_GLOBAL_OPTIONS,
     }
@@ -116,7 +103,6 @@ export default class SupabaseClient<
     )
     this.fetch = fetchWithAuth(supabaseKey, this._getAccessToken.bind(this), settings.global?.fetch)
 
-    this.realtime = this._initRealtimeClient({ headers: this.headers, ...settings.realtime })
     this.rest = new PostgrestClient(`${_supabaseUrl}/rest/v1`, {
       headers: this.headers,
       schema: settings.db?.schema,
@@ -203,41 +189,6 @@ export default class SupabaseClient<
     return this.rest.rpc(fn, args, options)
   }
 
-  /**
-   * Creates a Realtime channel with Broadcast, Presence, and Postgres Changes.
-   *
-   * @param {string} name - The name of the Realtime channel.
-   * @param {Object} opts - The options to pass to the Realtime channel.
-   *
-   */
-  channel(name: string, opts: RealtimeChannelOptions = { config: {} }): RealtimeChannel {
-    return this.realtime.channel(name, opts)
-  }
-
-  /**
-   * Returns all Realtime channels.
-   */
-  getChannels(): RealtimeChannel[] {
-    return this.realtime.getChannels()
-  }
-
-  /**
-   * Unsubscribes and removes Realtime channel from Realtime client.
-   *
-   * @param {RealtimeChannel} channel - The name of the Realtime channel.
-   *
-   */
-  removeChannel(channel: RealtimeChannel): Promise<'ok' | 'timed out' | 'error'> {
-    return this.realtime.removeChannel(channel)
-  }
-
-  /**
-   * Unsubscribes and removes all Realtime channels from Realtime client.
-   */
-  removeAllChannels(): Promise<('ok' | 'timed out' | 'error')[]> {
-    return this.realtime.removeAllChannels()
-  }
-
   private async _getAccessToken() {
     const { data } = await this.auth.getSession()
 
@@ -273,13 +224,6 @@ export default class SupabaseClient<
     })
   }
 
-  private _initRealtimeClient(options: RealtimeClientOptions) {
-    return new RealtimeClient(this.realtimeUrl, {
-      ...options,
-      params: { ...{ apikey: this.supabaseKey }, ...options?.params },
-    })
-  }
-
   private _listenForAuthEvents() {
     let data = this.auth.onAuthStateChange((event, session) => {
       this._handleTokenChanged(event, session?.access_token, 'CLIENT')
@@ -297,12 +241,9 @@ export default class SupabaseClient<
       this.changedAccessToken !== token
     ) {
       // Token has changed
-      this.realtime.setAuth(token ?? null)
-
       this.changedAccessToken = token
     } else if (event === 'SIGNED_OUT') {
       // Token is removed
-      this.realtime.setAuth(this.supabaseKey)
       if (source == 'STORAGE') this.auth.signOut()
       this.changedAccessToken = undefined
     }

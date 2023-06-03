@@ -1,5 +1,4 @@
 import { GoTrueClient } from '@supabase/gotrue-js'
-import { RealtimeClientOptions } from '@supabase/realtime-js'
 
 type GoTrueClientOptions = ConstructorParameters<typeof GoTrueClient>[0]
 
@@ -41,10 +40,6 @@ export type SupabaseClientOptions<SchemaName> = {
      */
     flowType?: SupabaseAuthClientOptions['flowType']
   }
-  /**
-   * Options passed to the realtime-js instance
-   */
-  realtime?: RealtimeClientOptions
   global?: {
     /**
      * A custom `fetch` implementation.

@@ -1,18 +1,16 @@
-# `supabase-js`
+# `supabase-js-sans-realtime`
 
-[![Coverage Status](https://coveralls.io/repos/github/supabase/supabase-js/badge.svg?branch=master)](https://coveralls.io/github/supabase/supabase-js?branch=master)
+An isomorphic JavaScript client for Supabase... with `@supabase/realtime-js` completely removed!
 
-An isomorphic JavaScript client for Supabase.
-
-- **Documentation:** https://supabase.com/docs/reference
-- TypeDoc: https://supabase.github.io/supabase-js/v2/
+- **Documentation:** <https://supabase.com/docs/reference>
+- TypeDoc: <https://supabase.github.io/supabase-js/v2/>
 
 ## Usage
 
 First of all, you need to install the library:
 
 ```sh
-npm install @supabase/supabase-js
+npm install @supabase/supabase-js@
 ```
 
 Then you're able to import the library and establish the connection with the database:
